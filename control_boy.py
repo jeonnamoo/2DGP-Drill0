@@ -1,11 +1,10 @@
 from pico2d import *
-
-from boy import Boy
+import game_world
 from grass import Grass
+from boy import Boy
 
 def handle_events():
-    global running
-
+    global running, boy
     events = get_events()
     for event in events:
         if event.type == SDL_QUIT:
@@ -13,43 +12,45 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             running = False
         else:
-            if event.type in (SDL_KEYDOWN, SDL_KEYUP):
-                boy.handle_event(event)
+            boy.handle_event(event)
 
 def reset_world():
-    global running
-    global grass
-    global world
-    global boy
-
+    global boy, running
     running = True
-    world = []
 
-    grass = Grass()
-    world.append(grass)
+    BACKGROUND_LAYER = 0
+    BOY_LAYER = 1
+    FOREGROUND_LAYER = 2
+
+    game_world.world = [[], [], []]
+
+    # 뒤쪽 잔디 (y=70)
+    grass_background = Grass(y=50)
+    game_world.add_object(grass_background, BACKGROUND_LAYER)
 
     boy = Boy()
-    world.append(boy)
+    game_world.add_object(boy, BOY_LAYER)
+
+    # 앞쪽 잔디 (y=50)
+    grass_foreground = Grass(y=30)
+    game_world.add_object(grass_foreground, FOREGROUND_LAYER)
 
 def update_world():
-    for o in world:
-        o.update()
+    game_world.update()
 
 def render_world():
     clear_canvas()
-    for o in world:
-        o.draw()
+    game_world.render()
     update_canvas()
 
 open_canvas()
 reset_world()
 
-# 게임 루프
+running = True
 while running:
     handle_events()
     update_world()
     render_world()
     delay(0.01)
 
-# 최종화 코드
 close_canvas()
