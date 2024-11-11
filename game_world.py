@@ -1,24 +1,36 @@
-# game_world.py
-# Managing objects in multiple layers
+objects = [[] for _ in range(4)]
 
-world = [[], [], []]  # 3 layers: background, middle, foreground
 
-def add_object(o, depth):
-    world[depth].append(o)
+def add_object(o, depth = 0):
+    objects[depth].append(o)
+
+def add_objects(ol, depth = 0):
+    objects[depth] += ol
+
 
 def update():
-    for layer in world:
-        for obj in layer:
-            obj.update()
+    for layer in objects:
+        for o in layer:
+            o.update()
+
 
 def render():
-    for layer in world:
-        for obj in layer:
-            obj.draw()
+    for layer in objects:
+        for o in layer:
+            o.draw()
+
 
 def remove_object(o):
-    for layer in world:
+    for layer in objects:
         if o in layer:
             layer.remove(o)
             return
-    print("Error: Tried to remove a non-existent object")
+    raise ValueError('Cannot delete non existing object')
+
+
+def clear():
+    global objects
+
+    objects = [[] for _ in range(4)]
+
+
