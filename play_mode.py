@@ -1,7 +1,14 @@
+import random
+
 from pico2d import *
 import game_framework
+
 import game_world
-from bird import Bird
+from boy import Boy
+from ball import Ball
+from zombie import Zombie
+from ground import Ground
+
 
 def handle_events():
     events = get_events()
@@ -10,19 +17,40 @@ def handle_events():
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
+
         else:
-            bird.handle_event(event)
+            boy.handle_event(event)
+
 
 def init():
-    global bird
-    bird = Bird()
-    game_world.add_object(bird, 1)
+    global boy
+
+    ground = Ground()
+    game_world.add_object(ground, 0)
+
+    boy = Boy()
+    game_world.add_object(boy, 2)
+    game_world.add_collision_pair('boy:ball', boy, None)
+
+    zombie = Zombie(300, 300)
+    game_world.add_object(zombie, 2)
+    game_world.add_collision_pair('zombie:ball', zombie, None)
+
+    balls = [Ball() for _ in range(30)]
+    for ball in balls:
+        game_world.add_object(ball, 1)
+        game_world.add_collision_pair('boy:ball', None, ball)
+        game_world.add_collision_pair('zombie:ball', None, ball)
+
 
 def finish():
     game_world.clear()
+    pass
+
 
 def update():
     game_world.update()
+    game_world.handle_collisions()
 
 def draw():
     clear_canvas()
@@ -34,3 +62,4 @@ def pause():
 
 def resume():
     pass
+
