@@ -115,19 +115,29 @@ class Zombie:
     def move_to_boy(self, r=0.5):
         self.state = 'Walk'
         self.move_slightly_to(play_mode.boy.x, play_mode.boy.y)
-        if self.distance_less_than(play_mode.boy.x, play_mode.boy.y, self.x, self.y, r):
-            return BehaviorTree.SUCCESS
-        else:
+
+        # 공 개수가 많은 경우에만 추적
+        if self.ball_count > play_mode.boy.ball_count:
+            if self.distance_less_than(self.x, self.y, play_mode.boy.x, play_mode.boy.y, r):
+                return BehaviorTree.SUCCESS
             return BehaviorTree.RUNNING
+        return BehaviorTree.FAIL  # 공 개수가 많지 않은 경우 추적하지 않음
 
     def escape_from_boy(self, r=7):
         self.state = 'Walk'
+        print(f"도망 중: 현재 위치 ({self.x:.2f}, {self.y:.2f}), 소년 위치 ({play_mode.boy.x:.2f}, {play_mode.boy.y:.2f})")
+
+        # 소년으로부터 반대 방향으로 이동
         self.move_slightly_from(play_mode.boy.x, play_mode.boy.y)
-        if not self.distance_less_than(self.x, self.y, play_mode.boy.x, play_mode.boy.y, r):
-            self.state = 'Idle'
-            return BehaviorTree.SUCCESS
-        else:
-            return BehaviorTree.RUNNING
+
+        # 공 개수가 적은 경우 도망
+        if self.ball_count < play_mode.boy.ball_count:
+            # 충분히 멀어진 경우 Wander 상태로 전환
+            if not self.distance_less_than(self.x, self.y, play_mode.boy.x, play_mode.boy.y, r):
+                print("도망 성공, Wander 상태로 전환")
+                return BehaviorTree.SUCCESS
+            return BehaviorTree.RUNNING  # 아직 멀어지지 않음
+        return BehaviorTree.FAIL  # 공 개수가 적지 않은 경우 도망하지 않음
 
     def get_patrol_location(self):
         self.tx, self.ty = self.patrol_locations[self.loc_no]
@@ -141,17 +151,20 @@ class Zombie:
         wander_sequence = Sequence('배회', wander_action, move_action)
 
         # 도망 행동
-        is_near_boy = Condition('소년이 근처에 있는가?', self.is_boy_nearby, 7)
         escape_action = Action('도망', self.escape_from_boy)
-        escape_sequence = Sequence('도망', is_near_boy, escape_action)
+        escape_sequence = Sequence('도망', escape_action)
 
         # 추적 행동
-        has_more_balls = Condition('공 개수가 많은가?', lambda: self.ball_count >= play_mode.boy.ball_count)
         chase_action = Action('소년 추적', self.move_to_boy)
-        chase_sequence = Sequence('추적', is_near_boy, has_more_balls, chase_action)
+        chase_sequence = Sequence('추적', chase_action)
 
-        # 최상위 Selector 노드
-        root = Selector('행동 선택', escape_sequence, chase_sequence, wander_sequence)
+        # 소년이 근처에 있는 경우 (추적 또는 도망)
+        is_near_boy = Condition('소년이 근처에 있는가?', self.is_boy_nearby, 7)
+        near_boy_selector = Selector('근처에서 행동 선택', escape_sequence, chase_sequence)
 
-        # BehaviorTree 설정
+        # 최상위 Selector 노드 (우선순위: 근처 판단 -> 배회)
+        root = Selector('행동 선택', Sequence('근처 확인', is_near_boy, near_boy_selector), wander_sequence)
+
         self.bt = BehaviorTree(root)
+
+
