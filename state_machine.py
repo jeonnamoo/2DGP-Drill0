@@ -1,6 +1,8 @@
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_UP, SDLK_DOWN
 
 
+# state event check
+# ( state event type, event value )
 
 def start_event(e):
     return e[0] == 'START'
@@ -8,18 +10,27 @@ def start_event(e):
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
 
-
 def right_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_RIGHT
-
 
 def left_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
 
-
 def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
 
+
+def upkey_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_UP
+
+def upkey_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_UP
+
+def downkey_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
+
+def downkey_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
 
 def space_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_SPACE
@@ -27,6 +38,7 @@ def space_down(e):
 def time_out(e):
     return e[0] == 'TIME_OUT'
 
+# time_out = lambda e : e[0] == 'TIME_OUT'
 
 
 
@@ -61,10 +73,10 @@ class StateMachine:
     def handle_event(self, e):
         for event, next_state in self.transitions[self.cur_state].items():
             if event(e):
-                print(f'Exit from {self.cur_state}')
+                # print(f'Exit from {self.cur_state}')
                 self.cur_state.exit(self.o, e)
                 self.cur_state = next_state
-                print(f'Enter into {self.cur_state}')
+                # print(f'Enter into {self.cur_state}')
                 self.cur_state.enter(self.o, e)
                 return
 
